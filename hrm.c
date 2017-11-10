@@ -127,11 +127,19 @@ void trans()
 		if(*rawp=='\''){
 			char temp = *(++rawp);
 			if(temp == '\\'){
-				if(*(++rawp) == 'n')
-					temp = '\n';
-				else{
-					printf("char error\n");
-					return;
+				switch(*(++rawp)){
+					case 'n':
+						temp = '\n';
+						break;
+					case '\\':
+						temp = '\\';
+						break;
+					case 'b':
+						temp = '\b';
+						break;
+					default:
+						printf("char error\n");
+						return;
 				}
 			}
 			if(*(++rawp) != '\''){	//終端確認
