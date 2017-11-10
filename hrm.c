@@ -322,7 +322,10 @@ int main()
 	for(;;)
 	{
 		putchar('>');
-		fgets(raw, 256, stdin);
+		if(fgets(raw, 256, stdin) == NULL){
+			putchar('\n');
+			return 0;
+		}
 		trans();
 		run_start = false;
 		dprint("-----------\n");
