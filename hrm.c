@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -8,18 +8,22 @@
 #ifdef debug
 #define dprint printf
 #else
-#define dprint(...) do {} while (0)
+#define dprint(...) ;
 #endif
 
 #define bufend (buf + buflen)
+#define LAW_SIZE 80
 #define BUF_SIZE 128
 #define LABEL_NUM 64
 #define CARPET_SIZE 64
+#define KW_NEED_NEWLINE 4
 
 const char *kwtbl[] = {
-	//"\n",
+	"[",
+	"]",
 	"inbox",
 	"outbox",
+	//ここから改行なし
 	"copyfrom",
 	"copyto",
 	"add",
@@ -29,17 +33,19 @@ const char *kwtbl[] = {
 	"jumpifzero",
 	"jumpifneg",
 	"jump",
-	"[","]",
 	//ここから独自のキーワード
 	":",	//ラベル
 	"get",	//即値
+	
+	//ここから中間コードに対応なし
 	"run"	//実行
 };
 
 const int KWTBL_SIZE = sizeof(kwtbl)/sizeof(char *);
 
 enum {
-	//i_newline,
+	i_open,
+	i_close,
 	i_inbox,
 	i_outbox,
 	i_copyfrom,
@@ -51,13 +57,11 @@ enum {
 	i_jumpifzero,
 	i_jumpifneg,
 	i_jump,
-	i_open,
-	i_close,
 	//ここから独自のキーワード
 	i_label,	//ラベル
 	i_get,	//即値
 	i_run,
-	//特集キーワード
+	//特殊キーワード
 	i_num,
 	i_pass,
 	i_char,
@@ -81,7 +85,7 @@ typedef struct
 	int num;
 } tile;
 
-char raw[BUF_SIZE*16];
+char raw[LAW_SIZE];
 
 int buf[BUF_SIZE];
 int buflen = 0;
@@ -98,6 +102,11 @@ void init()
 		carpet[i].type = type_empty;
 		carpet[i].num = 0;
 	}
+}
+
+void buf_clear()
+{
+	buflen = 0;
 }
 
 void trans()
@@ -128,18 +137,18 @@ void trans()
 			char temp = *(++rawp);
 			if(temp == '\\'){
 				switch(*(++rawp)){
-					case 'n':
-						temp = '\n';
-						break;
-					case '\\':
-						temp = '\\';
-						break;
-					case 'b':
-						temp = '\b';
-						break;
-					default:
-						printf("char error\n");
-						return;
+				case 'n':
+					temp = '\n';
+					break;
+				case '\\':
+					temp = '\\';
+					break;
+				case 'b':
+					temp = '\b';
+					break;
+				default:
+					printf("char error\n");
+					return;
 				}
 			}
 			if(*(++rawp) != '\''){	//終端確認
@@ -176,6 +185,8 @@ void trans()
 	}
 	printf("ok\n");
 }
+
+//LABELS***************************
 
 void setlabel(int name, int* p)
 {
@@ -225,13 +236,57 @@ void setup()
 	}
 }
 
+//reader*******************************
+
+int* bufp;
+void stop(){
+	bufp=bufend;
+}
+int refsolver()
+{	// " i_num NUM " or " [ i_num NUM ] "
+	bufp++;
+	if(*bufp==i_num){
+		return *(++bufp);
+	}else if(*bufp==i_open){
+		bufp += 2;
+		if(0<=*bufp || *bufp<CARPET_SIZE){
+			if(carpet[*bufp].type==type_num){
+				return carpet[*bufp++].num;
+			}else{
+				printf("type error");
+			}
+		}else{
+			printf("out of index");
+		}
+	}
+	printf(" stop\n");
+	stop();
+	return 0;
+}
+
 void reader()
 {
-	int* bufp = buf;
+	int refn;
+	bufp = buf;
 	while(bufp < bufend)
 	{
 		switch(*bufp)
 		{
+		case i_copyto:
+			if(acm.type==type_empty)
+				printf("no value");
+			
+			carpet[refsolver()] = acm;
+			break;
+		case i_copyfrom:
+			refn = refsolver();
+			if(carpet[refn].type==type_empty){
+				printf("no value");
+				bufp=buf;
+			}else{
+				acm=carpet[refn];
+			}
+			break;
 		case i_outbox:
 			switch (acm.type) {
 				case type_empty:
@@ -241,9 +296,10 @@ void reader()
 					putchar(acm.num);
 					break;
 				case type_num:
-					printf("%d\n",acm.num);
+					printf(" %d",acm.num);
 					break;
 			}
+			acm.type = type_empty;
 			//printf("!outbox\n");
 			break;
 		case i_get:
@@ -308,6 +364,8 @@ void reader()
 	}
 }
 
+//-------------------------------
+
 void run()
 {
 	setup();
@@ -337,21 +395,27 @@ int main()
 			}
 			#ifdef debug
 			if(buf[i] == i_num){
-				printf("i_num\n");
+				//printf("i_num\n");
 				printf("%d\n",buf[++i]);
 				continue;
 			}
 			if(buf[i] == i_char){
-				printf("i_char\n");
-				printf("%c\n",buf[++i]);
+				printf("'");
+				printf("%c",buf[++i]);
+				printf("'\n");
 				continue;
 			}
 			if(buf[i] == i_pass){
-				printf("i_pass\n");
+				//printf("i_pass\n");
 				continue;
 			}
-			if(0<buf[i] && buf[i]<KWTBL_SIZE)
+			if(0<buf[i] && buf[i]<KWTBL_SIZE){
+				if(buf[i]<KW_NEED_NEWLINE){
 				printf("%s\n",kwtbl[buf[i]]);
+				}else{
+				printf("%s ",kwtbl[buf[i]]);
+				}
+			}
 			#endif
 		}
 		dprint("-----------\n");
