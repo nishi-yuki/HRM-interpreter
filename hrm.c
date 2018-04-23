@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -267,17 +267,18 @@ int refsolver()
 void reader()
 {
 	int refn;
-	bufp = buf;
-	while(bufp < bufend)
+	for(bufp=buf;bufp<bufend;bufp++)
 	{
 		switch(*bufp)
 		{
 		case i_copyto:
-			if(acm.type==type_empty)
+			if(acm.type==type_empty){
 				printf("no value");
-			
+			}
+
 			carpet[refsolver()] = acm;
 			break;
+
 		case i_copyfrom:
 			refn = refsolver();
 			if(carpet[refn].type==type_empty){
@@ -287,6 +288,23 @@ void reader()
 				acm=carpet[refn];
 			}
 			break;
+
+		case i_bump_p:
+		case i_bump_m:
+			refn = refsolver();
+			if(carpet[refn].type==type_empty){
+				printf("no value");
+				bufp=buf;
+			}else{
+				if(*bufp==i_bump_p){
+					carpet[refn].num++;
+				}else{
+					carpet[refn].num--;
+				}
+				acm=carpet[refn];
+			}
+			break;
+
 		case i_outbox:
 			switch (acm.type) {
 				case type_empty:
@@ -302,6 +320,7 @@ void reader()
 			acm.type = type_empty;
 			//printf("!outbox\n");
 			break;
+
 		case i_get:
 			switch(*(++bufp)){
 				case i_num:
@@ -317,6 +336,7 @@ void reader()
 					return;
 			}
 			break;
+
 		//jump----------------
 		case i_jumpifneg:
 		//原作の仕様通り、型チェックはしない
@@ -333,6 +353,7 @@ void reader()
 				bufp = p;
 			}
 			break;
+
 		case i_jumpifzero:
 		//原作の仕様通り、型チェックはしない
 		//空のときのみ例外
@@ -348,6 +369,7 @@ void reader()
 				bufp = p;
 			}
 			break;
+
 		case i_label:
 			printf("?\n");
 		case i_jump:
@@ -357,10 +379,10 @@ void reader()
 				return;
 			bufp = p;
 			break;
+
 		//jump end --------------
 		}
 		//dprint("iok\n");
-		bufp++;
 	}
 }
 
