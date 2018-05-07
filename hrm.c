@@ -259,7 +259,7 @@ int refsolver()
 			printf("out of index");
 		}
 	}
-	printf(" stop\n");
+	printf("\nref-error stop\n");
 	stop();
 	return 0;
 }
