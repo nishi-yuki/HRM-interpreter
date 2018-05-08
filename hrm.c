@@ -343,12 +343,12 @@ void reader()
 		case i_jumpifneg:
 		//原作の仕様通り、型チェックはしない
 		//空のときのみ例外
+			bufp += 2;				
 			if(acm.type == type_empty){
 				printf("if error no tile\n");
 				return;
 			}
 			if(acm.num < 0){
-				bufp += 2;
 				int* p = labelsearch(*bufp);
 				if(p == NULL)
 					return;
@@ -359,12 +359,12 @@ void reader()
 		case i_jumpifzero:
 		//原作の仕様通り、型チェックはしない
 		//空のときのみ例外
+			bufp += 2;
 			if(acm.type == type_empty){
 				printf("if error no tile\n");
 				return;
 			}
 			if(acm.num==0){
-				bufp += 2;
 				int* p = labelsearch(*bufp);
 				if(p == NULL)
 					return;
