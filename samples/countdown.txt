@@ -1,0 +1,9 @@
+get 20
+copyto 0
+:1
+bump- 0
+outbox
+copyfrom 0
+jumpifzero 5
+jump 1
+:5
