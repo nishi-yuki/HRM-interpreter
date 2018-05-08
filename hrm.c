@@ -267,9 +267,11 @@ int refsolver()
 void reader()
 {
 	int refn;
+	int command;
 	for(bufp=buf;bufp<bufend;bufp++)
 	{
-		switch(*bufp)
+		command = *bufp;
+		switch(command)
 		{
 		case i_copyto:
 			if(acm.type==type_empty){
@@ -296,7 +298,7 @@ void reader()
 				printf("no value");
 				bufp=buf;
 			}else{
-				if(*bufp==i_bump_p){
+				if(command==i_bump_p){
 					carpet[refn].num++;
 				}else{
 					carpet[refn].num--;
